@@ -13,9 +13,24 @@ venv/
 .pytest_cache/
 .mypy_cache/
 
-# Env / secrets
+# Env / secrets — never commit credentials of any kind
 .env
 .env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+id_rsa*
+id_ed25519*
+*credentials*.json
+*secrets*.yaml
+*secrets*.yml
+*secrets*.json
+.aws/
+.ssh/
+*.token
+gcloud-service-key.json
 
 # OS
 .DS_Store
