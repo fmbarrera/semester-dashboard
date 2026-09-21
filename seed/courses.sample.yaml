@@ -1,0 +1,28 @@
+# Fictional demo data — safe to commit. Loaded when no *.local.yaml files
+# are present, so a fresh clone has a working, populated dashboard.
+term: "Sample Semester"
+courses:
+  - id: bus101
+    code: "BUS 101"
+    name: "Introduction to Widgets"
+    professor: "A. Sample"
+    weight_scheme: percent
+    schedule: "MW 9:00-10:15am"
+    notes: "Fictional demo course."
+
+  - id: eco250
+    code: "ECO 250"
+    name: "Behavioral Economics of Snacking"
+    professor: "B. Example"
+    weight_scheme: points
+    total_points: 400
+    schedule: "TTh 2:00-3:15pm"
+    notes: "Fictional demo course."
+
+  - id: lang110
+    code: "LANG 110"
+    name: "Conversational Esperanto"
+    professor: "C. Placeholder"
+    weight_scheme: percent
+    schedule: "TTh 11:30am-12:45pm"
+    notes: "Fictional demo course, mirrors a language-class homework cadence."

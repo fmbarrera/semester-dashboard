@@ -1,0 +1,121 @@
+# Fictional demo data — safe to commit.
+#
+# Uses `due_in_days` (int, relative to whenever the seed script runs)
+# instead of `due_date`, so the demo always shows a realistic mix of
+# overdue/upcoming/future items no matter when someone clones the repo.
+# The loader resolves due_in_days -> an absolute due_date at seed time.
+# Real data (assignments.local.yaml) always uses absolute due_date instead.
+
+assignments:
+  - id: bus101-quiz1
+    course_id: bus101
+    title: "Quiz 1: Widget Fundamentals"
+    category: quiz
+    due_in_days: -3
+    due_time: "09:00"
+    weight_value: 5
+    weight_unit: percent
+    is_team: false
+    notes: "Example of a past/overdue item."
+
+  - id: bus101-case1
+    course_id: bus101
+    title: "Case Analysis: WidgetCo Turnaround"
+    category: case
+    due_in_days: 2
+    due_time: "23:59"
+    weight_value: 10
+    weight_unit: percent
+    is_team: false
+
+  - id: bus101-midterm
+    course_id: bus101
+    title: "Midterm Exam"
+    category: exam
+    due_in_days: 10
+    due_time: "09:00"
+    weight_value: 25
+    weight_unit: percent
+    is_team: false
+
+  - id: bus101-final-project
+    course_id: bus101
+    title: "Final Project: Go-to-Market Plan"
+    category: project
+    due_in_days: 45
+    due_time: "23:59"
+    weight_value: 30
+    weight_unit: percent
+    is_team: true
+
+  - id: eco250-problem-set-1
+    course_id: eco250
+    title: "Problem Set 1"
+    category: problem_set
+    due_in_days: 5
+    due_time: "17:00"
+    weight_value: 40
+    weight_unit: points
+    is_team: false
+
+  - id: eco250-paper
+    course_id: eco250
+    title: "Research Paper: Snack Choice Under Scarcity"
+    category: paper
+    due_in_days: 21
+    due_time: "23:59"
+    weight_value: 80
+    weight_unit: points
+    is_team: false
+
+  - id: eco250-final-exam
+    course_id: eco250
+    title: "Final Exam"
+    category: exam
+    due_in_days: null
+    due_time: null
+    weight_value: 120
+    weight_unit: points
+    is_team: false
+    status: tbd
+    notes: "Example of a TBD item — date not yet announced."
+
+  - id: lang110-hw-week1
+    course_id: lang110
+    title: "Week 1 homework"
+    category: homework
+    due_in_days: 1
+    due_time: "11:30"
+    weight_value: 2
+    weight_unit: percent
+    is_team: false
+
+  - id: lang110-hw-week2
+    course_id: lang110
+    title: "Week 2 homework"
+    category: homework
+    due_in_days: 8
+    due_time: "11:30"
+    weight_value: 2
+    weight_unit: percent
+    is_team: false
+
+  - id: lang110-oral-exam
+    course_id: lang110
+    title: "Oral Exam"
+    category: exam
+    due_in_days: 30
+    due_time: null
+    weight_value: 15
+    weight_unit: percent
+    is_team: false
+
+  - id: lang110-presentation
+    course_id: lang110
+    title: "Cultural Presentation"
+    category: presentation
+    due_in_days: 14
+    due_time: null
+    weight_value: 10
+    weight_unit: percent
+    is_team: true

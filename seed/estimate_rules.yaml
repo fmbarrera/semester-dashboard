@@ -1,0 +1,21 @@
+# Default time-investment estimates by assignment category, in hours.
+# These are starting points, not a promise — override any single
+# assignment's estimate once the app is running (that becomes
+# TimeEstimate.override_hours and always wins over the default here).
+#
+# "project" is intentionally a single lump-sum estimate in v1. Phase 2
+# (see PRD.md §7) will add auto-spacing so a project's hours get spread
+# across multiple days instead of showing as one big block on the due date.
+
+categories:
+  quiz: 1.5
+  exam: 4.0
+  project: 8.0
+  paper: 4.0
+  case: 2.0
+  presentation: 3.0
+  homework: 1.0
+  problem_set: 3.0
+  discussion_post: 1.0
+  reflection: 1.5
+  other: 1.0

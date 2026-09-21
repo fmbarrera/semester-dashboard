@@ -1,6 +1,6 @@
 # Personal data — never commit real schedule/completion state
 data/
-seed/assignments.local.yaml
+seed/*.local.yaml
 *.db
 *.db-journal
 
