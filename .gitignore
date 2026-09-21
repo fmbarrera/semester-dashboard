@@ -1,0 +1,25 @@
+# Personal data — never commit real schedule/completion state
+data/
+seed/assignments.local.yaml
+*.db
+*.db-journal
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Env / secrets
+.env
+.env.*
+
+# OS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
