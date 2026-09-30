@@ -77,8 +77,10 @@ every week, not just build it once and abandon it.
   paper, project, case, presentation, recurring homework, etc.) with a
   default hours value; each assignment can override it individually.
 - **Network access:** runs via `python app.py` (uvicorn under the hood),
-  bound to `0.0.0.0`, so it's reachable from a phone on the same wifi at
-  `http://<mac-lan-ip>:8000`.
+  listening on this machine only (`127.0.0.1`) by default, since the app has
+  no login and is often used on public wifi. `python app.py --lan` binds
+  `0.0.0.0` so a phone on the same trusted wifi can reach it at
+  `http://<mac-lan-ip>:8000` (the app prints the address).
 - **Tests:** pytest coverage for the API layer and the time-estimate/urgency
   logic.
 

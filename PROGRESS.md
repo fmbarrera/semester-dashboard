@@ -5,8 +5,8 @@
 
 ## Where things stand
 
-Milestones 1–4 from `PRD.md` §13 are done (scaffold + PRD, seed data,
-FastAPI backend + tests, list/dashboard frontend):
+Milestones 1–5 from `PRD.md` §13 are done (scaffold + PRD, seed data,
+FastAPI backend + tests, list view, calendar view):
 
 - [x] Git repo created at `~/Developer/semester-dashboard`, pushed to
       GitHub (public), `gh` authenticated, global git identity fixed
@@ -46,7 +46,9 @@ FastAPI backend + tests, list/dashboard frontend):
         `?within_days=N`), `GET/PATCH /api/assignments/{id}`
         (`{"completed": bool}`, `{"override_hours": float|null}`),
         `GET /api/estimate-rules`. Under `/api` so the HTML can own `/`.
-      - `app.py` — `python app.py [--reseed] [--port N]`, binds 0.0.0.0.
+      - `app.py` — `python app.py [--lan] [--reseed] [--port N]`. Listens
+        on this Mac only by default (safe on public wifi); `--lan` opens it
+        to the local network for phone access, with a warning.
         DB at `data/dashboard.db` (override with `DASHBOARD_DB`).
 - [x] **Tests** — 40 pytest tests (`tests/`), all passing. They copy only
       the sample seed files into a tmp dir, so they never touch real data.
@@ -70,12 +72,24 @@ FastAPI backend + tests, list/dashboard frontend):
       folder in iCloud Drive. To restore: stop
       the app, copy a snapshot's `dashboard.db` back into `data/`.
 
+- [x] **Calendar view**, 2026-09-30: third tab (also `/#calendar`, and
+      `#completed`, for bookmarks). Hand-rolled Sun–Sat month grid, no
+      library. Pills in class color (struck through when done, dashed when
+      TBD), open hours per day with ≥6h days in red, click a day to get
+      its assignments below as normal rows (checkbox + hours editing
+      work there). Phone width shows colored dots instead of pills.
+      Class filter applies. Click-tested in headless Chrome on a copy of
+      the DB.
+
 ## Not started yet
 
-- [ ] Frontend calendar view (month grid, color-coded by class).
 - [ ] `README.md` for the project itself (setup instructions, screenshot,
       "how to add your own semester" section).
 - [ ] Phase 2: auto-spacing scheduler for multi-day project planning.
+- [ ] Post-MVP: installable app (PWA) + access from anywhere, free and
+      private. Options and trade-offs written up in
+      `docs/deployment-options.md`. Undecided; recommended path is
+      PWA, then Tailscale.
 
 ## Open questions to resolve before/while building the backend
 
@@ -103,9 +117,11 @@ app (easier to spot errors there than in raw YAML):
 1. Check off the ~10 past items that show as overdue only because they
    haven't been marked done, and walk through the four open questions above
    now that the data is visible.
-2. Calendar view (PRD milestone 5): month grid, color-coded by class
-   using the same `--c0..--c7` palette as the list view. Leaning
-   hand-rolled over FullCalendar (PRD §12).
+2. `README.md` + GitHub polish (PRD milestone 6): setup steps,
+   screenshots (use sample data, never real), "add your own semester".
+3. Note for Phase 2: the calendar puts a project's whole 8h estimate on
+   its due date, so single-project days show as "heavy". Auto-spacing
+   (PRD §7) is the real fix.
 
 ## How to resume
 
@@ -119,7 +135,8 @@ Useful commands:
 cd ~/Developer/semester-dashboard
 python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt  # first time
 .venv/bin/python -m pytest -q    # run tests
-.venv/bin/python app.py          # http://localhost:8000 (API docs at /docs)
+.venv/bin/python app.py          # http://localhost:8000 (API docs at /docs), this Mac only
+.venv/bin/python app.py --lan    # also reachable from your phone; trusted wifi only
 .venv/bin/python app.py --reseed # after editing seed/*.yaml
 git log --oneline          # see what's been committed
 git status                 # anything in flight

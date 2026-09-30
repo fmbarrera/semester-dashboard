@@ -1,7 +1,9 @@
 """Run the dashboard: `python app.py` (add --reseed after editing seed/*.yaml).
 
-Binds to 0.0.0.0 so it's reachable from a phone on the same wifi at
-http://<mac-lan-ip>:8000.
+By default it listens on this machine only (127.0.0.1), so it's safe on
+public wifi: the app has no login, and anyone who can reach it can read and
+change your data. Add --lan on a trusted network (e.g. home wifi) to open
+it from your phone at the address it prints.
 
 If config.local.yaml sets `backup_dir`, the database and real seed files
 are backed up there on startup and again on shutdown (see
@@ -10,6 +12,7 @@ config.example.yaml).
 
 import argparse
 import os
+import socket
 from pathlib import Path
 
 import uvicorn
@@ -50,9 +53,25 @@ def run_backup(config: dict) -> None:
     print(f"Backed up to {dest}" if dest else "Backup skipped: nothing changed since the last one.")
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--host", default="0.0.0.0")
+LOCAL_ONLY = "127.0.0.1"
+ALL_INTERFACES = "0.0.0.0"
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    where = parser.add_mutually_exclusive_group()
+    where.add_argument(
+        "--lan",
+        action="store_true",
+        help="Also accept connections from other devices on this network, "
+        "e.g. your phone. Only use on a network you trust.",
+    )
+    where.add_argument(
+        "--host",
+        help=f"Advanced: exact address to listen on (default {LOCAL_ONLY}).",
+    )
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument(
         "--reseed",
@@ -60,7 +79,38 @@ def main() -> None:
         help="Reload seed/*.yaml into the database, keeping completion "
         "state and estimate overrides for assignments that still exist.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    if args.host is None:
+        args.host = ALL_INTERFACES if args.lan else LOCAL_ONLY
+    return args
+
+
+def lan_ip() -> str | None:
+    """This machine's address on the local network (no packets are sent)."""
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        try:
+            s.connect(("10.255.255.255", 1))
+            return s.getsockname()[0]
+        except OSError:
+            return None
+
+
+def announce(args: argparse.Namespace) -> None:
+    if args.host == LOCAL_ONLY:
+        print(f"Dashboard: http://localhost:{args.port}  (this computer only)")
+        return
+    ip = lan_ip()
+    print(f"Dashboard: http://localhost:{args.port}")
+    if ip:
+        print(f"From your phone (same wifi): http://{ip}:{args.port}")
+    print(
+        "WARNING: other devices on this network can open the dashboard, and it has\n"
+        "no login. Only use --lan on a network you trust, like home wifi."
+    )
+
+
+def main() -> None:
+    args = parse_args()
     config = load_config()
 
     run_backup(config)  # before --reseed, so there's always a pre-reseed copy
@@ -70,6 +120,7 @@ def main() -> None:
             kind = load_seed(session, SEED_DIR)
         print(f"Reseeded from {kind} seed files.")
 
+    announce(args)
     try:
         uvicorn.run(app, host=args.host, port=args.port)
     finally:
