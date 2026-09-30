@@ -118,3 +118,11 @@ def test_estimate_rules(client):
     rules = client.get("/api/estimate-rules").json()
     assert rules["exam"] == 4.0 and len(rules) == 11
 
+
+def test_index_and_static_assets_served(client):
+    page = client.get("/")
+    assert page.status_code == 200
+    assert "text/html" in page.headers["content-type"]
+    assert "/static/app.js" in page.text
+    assert client.get("/static/app.js").status_code == 200
+    assert client.get("/static/style.css").status_code == 200

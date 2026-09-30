@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Semester Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>Semester Dashboard</h1>
+      <p class="today" id="today"></p>
+    </div>
+    <dl class="stats" id="stats"></dl>
+  </header>
+
+  <nav class="controls" aria-label="Filters">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-view="open" aria-selected="true">Upcoming</button>
+      <button role="tab" data-view="completed" aria-selected="false">Completed</button>
+    </div>
+    <div class="chips" id="course-filter" role="group" aria-label="Filter by class"></div>
+  </nav>
+
+  <main id="list" aria-live="polite">
+    <p class="empty">Loading…</p>
+  </main>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>

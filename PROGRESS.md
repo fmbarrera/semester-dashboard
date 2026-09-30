@@ -1,12 +1,12 @@
 # Progress Log / Resume Point
 
-**Last session:** 2026-09-20
+**Last session:** 2026-09-29
 **Repo:** https://github.com/fmbarrera/semester-dashboard
 
 ## Where things stand
 
-Milestone 1 (repo scaffold + PRD) and most of milestone 2 (seed data) from
-`PRD.md` §13 are done:
+Milestones 1–4 from `PRD.md` §13 are done (scaffold + PRD, seed data,
+FastAPI backend + tests, list/dashboard frontend):
 
 - [x] Git repo created at `~/Developer/semester-dashboard`, pushed to
       GitHub (public), `gh` authenticated, global git identity fixed
@@ -28,14 +28,43 @@ Milestone 1 (repo scaffold + PRD) and most of milestone 2 (seed data) from
       real Fall 2026 data, all 7 classes, transcribed from the syllabi.
       **Gitignored — lives only on this machine, never pushed.**
 - [x] `seed/README.md` — documents the schema and the sample/local split.
+- [x] **FastAPI backend** (`dashboard/`, `app.py`), 2026-09-29:
+      - `models.py` — SQLModel tables `Course`, `Assignment`,
+        `TimeEstimate`, `EstimateRule`. Status is *derived* (completed if
+        `completed_at` set, else tbd if `date_tbd`, else upcoming), so
+        un-completing never loses TBD-ness. `date_tbd` is its own flag
+        because `blockchain304-project-idea-checkin` is TBD *with* an
+        approximate date (10/15).
+      - `seed.py` — loads local pair if both exist, else sample; validates
+        everything (unknown course/category, dup ids, bad times, mixed
+        date styles…) and fails loudly. **Re-seeding keeps completion
+        state and estimate overrides** by assignment id.
+      - `logic.py` — urgency buckets: overdue / due_soon (≤2d) /
+        this_week (≤7d) / later / no_date / done; sort order.
+      - `api.py` — `GET /api/courses`, `GET /api/assignments`
+        (`?course_id=`, `?status=upcoming|completed|tbd|open`,
+        `?within_days=N`), `GET/PATCH /api/assignments/{id}`
+        (`{"completed": bool}`, `{"override_hours": float|null}`),
+        `GET /api/estimate-rules`. Under `/api` so the HTML can own `/`.
+      - `app.py` — `python app.py [--reseed] [--port N]`, binds 0.0.0.0.
+        DB at `data/dashboard.db` (override with `DASHBOARD_DB`).
+- [x] **Tests** — 40 pytest tests (`tests/`), all passing. They copy only
+      the sample seed files into a tmp dir, so they never touch real data.
+- [x] Smoke-tested against the real local data: all 63 assignments /
+      7 courses load and validate cleanly.
+- [x] **Frontend v1 — list view** (`dashboard/static/`), 2026-09-30:
+      plain `index.html` + `app.js` + `style.css` served at `/` (no
+      Jinja needed — the page is fully static and fetches the API, a small
+      deviation from PRD §6). Groups by urgency with count + hours per
+      group, checkbox to complete, click the hours to override (empty =
+      reset to default), course filter chips, Upcoming/Completed tabs,
+      expandable notes, TBD/Team tags, header stats (next 7 days,
+      overdue). Light + dark mode; checked at 390px phone width. View,
+      filter and collapsed groups remembered per browser (localStorage).
 
 ## Not started yet
 
-- [ ] FastAPI backend (data models, loader that reads the seed YAML into
-      SQLite, REST API for listing/completing assignments and overriding
-      time estimates).
-- [ ] Frontend (list/dashboard view, then calendar view).
-- [ ] Tests (pytest for the API + urgency/estimate logic).
+- [ ] Frontend calendar view (month grid, color-coded by class).
 - [ ] `README.md` for the project itself (setup instructions, screenshot,
       "how to add your own semester" section).
 - [ ] Phase 2: auto-spacing scheduler for multi-day project planning.
@@ -63,13 +92,12 @@ app (easier to spot errors there than in raw YAML):
 
 ## Next concrete step
 
-Build the FastAPI backend: SQLModel schema (`Course`, `Assignment`,
-`TimeEstimate`), a seed-loader that reads `seed/*.yaml` (local if
-present, else sample) into SQLite on first run, and a small REST API
-(`GET /assignments`, `PATCH /assignments/{id}` for completion +
-estimate overrides, `GET /courses`). Once that exists, the four open
-questions above become much easier to check by actually looking at the
-dashboard instead of raw YAML.
+1. Check off the ~10 past items that show as overdue only because they
+   haven't been marked done, and walk through the four open questions above
+   now that the data is visible.
+2. Calendar view (PRD milestone 5): month grid, color-coded by class
+   using the same `--c0..--c7` palette as the list view. Leaning
+   hand-rolled over FullCalendar (PRD §12).
 
 ## How to resume
 
@@ -81,6 +109,10 @@ Useful commands:
 
 ```bash
 cd ~/Developer/semester-dashboard
+python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt  # first time
+.venv/bin/python -m pytest -q    # run tests
+.venv/bin/python app.py          # http://localhost:8000 (API docs at /docs)
+.venv/bin/python app.py --reseed # after editing seed/*.yaml
 git log --oneline          # see what's been committed
 git status                 # anything in flight
 gh repo view --web         # open the GitHub repo

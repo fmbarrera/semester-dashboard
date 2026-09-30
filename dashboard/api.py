@@ -1,4 +1,4 @@
-"""FastAPI app: JSON API under /api (the HTML frontend will live at /)."""
+"""FastAPI app: JSON API under /api, the static frontend at / and /static."""
 
 from collections.abc import Callable
 from contextlib import asynccontextmanager
@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import Engine
 from sqlmodel import Session, SQLModel, select
 
@@ -14,6 +16,8 @@ from . import logic
 from .models import Assignment, Course, EstimateRule, TimeEstimate
 from .schemas import AssignmentRead, AssignmentUpdate, CourseRead, EstimateRead
 from .seed import is_seeded, load_seed
+
+STATIC_DIR = Path(__file__).parent / "static"
 
 
 def create_app(
@@ -33,6 +37,12 @@ def create_app(
     app.state.engine = engine
     app.state.today = today
     register_routes(app)
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+    @app.get("/", include_in_schema=False)
+    def index():
+        return FileResponse(STATIC_DIR / "index.html")
+
     return app
 
 
