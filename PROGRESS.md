@@ -1,6 +1,6 @@
 # Progress Log / Resume Point
 
-**Last session:** 2026-09-29
+**Last session:** 2026-09-30
 **Repo:** https://github.com/fmbarrera/semester-dashboard
 
 ## Where things stand
@@ -81,10 +81,17 @@ FastAPI backend + tests, list view, calendar view):
       Class filter applies. Click-tested in headless Chrome on a copy of
       the DB.
 
+- [x] **README.md** (PRD milestone 6), 2026-09-30: features, quick start,
+      CLI options + no-login warning, "add your own semester", backups,
+      architecture, dev/test, roadmap. Screenshots in `docs/screenshots/`
+      are from the **sample data only** (list, October calendar, 390px
+      phone), taken with headless Chrome. Fixed `requirements-dev.txt`:
+      it listed `httpx2` (unused, unfamiliar package) instead of `httpx`,
+      which FastAPI's TestClient needs.
+
 ## Not started yet
 
-- [ ] `README.md` for the project itself (setup instructions, screenshot,
-      "how to add your own semester" section).
+- [ ] GitHub polish left: pick a LICENSE (none yet), repo description/topics.
 - [ ] Phase 2: auto-spacing scheduler for multi-day project planning.
 - [ ] Post-MVP: installable app (PWA) + access from anywhere, free and
       private. Options and trade-offs written up in
@@ -117,8 +124,8 @@ app (easier to spot errors there than in raw YAML):
 1. Check off the ~10 past items that show as overdue only because they
    haven't been marked done, and walk through the four open questions above
    now that the data is visible.
-2. `README.md` + GitHub polish (PRD milestone 6): setup steps,
-   screenshots (use sample data, never real), "add your own semester".
+2. Finish GitHub polish: choose a license, set repo description/topics.
+   Consider `pip uninstall httpx2` from `.venv` if you didn't add it on purpose.
 3. Note for Phase 2: the calendar puts a project's whole 8h estimate on
    its due date, so single-project days show as "heavy". Auto-spacing
    (PRD §7) is the real fix.
