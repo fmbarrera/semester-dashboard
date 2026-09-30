@@ -1,4 +1,4 @@
-// Semester Dashboard — list view. Plain JS, no build step.
+// Semester Dashboard — list and calendar views. Plain JS, no build step.
 // Fetches everything once (a semester is ~100 items), filters client-side,
 // and patches single items in place when they change.
 
@@ -11,12 +11,18 @@ const GROUPS = [
 ];
 const PALETTE_SIZE = 8;
 
+const VIEWS = ["open", "completed", "calendar"];
+const HEAVY_DAY_HOURS = 6;
+const MAX_PILLS = 3;
+
 const state = {
-  view: "open", // "open" | "completed"
+  view: "open", // one of VIEWS
   course: null, // course id, or null for all
   courses: [],
   assignments: [],
   collapsed: new Set(),
+  cal: null, // { year, month } shown in the calendar; set in init()
+  selected: null, // ISO date picked in the calendar, or null
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -26,7 +32,7 @@ const $ = (sel) => document.querySelector(sel);
 function loadPrefs() {
   try {
     const p = JSON.parse(localStorage.getItem("dashboard-prefs") || "{}");
-    if (p.view === "open" || p.view === "completed") state.view = p.view;
+    if (VIEWS.includes(p.view)) state.view = p.view;
     if (typeof p.course === "string") state.course = p.course;
     if (Array.isArray(p.collapsed)) state.collapsed = new Set(p.collapsed);
   } catch {}
@@ -79,6 +85,10 @@ function parseDate(iso) {
   return new Date(y, m - 1, d);
 }
 
+// Local Date -> "2026-10-07" (toISOString() would shift to UTC).
+const toISO = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 const fmtDate = (iso) =>
   parseDate(iso).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 
@@ -125,6 +135,7 @@ function renderFilters() {
   for (const btn of document.querySelectorAll(".tabs button")) {
     btn.setAttribute("aria-selected", String(btn.dataset.view === state.view));
   }
+  // The calendar shows everything, but its chips count what's still open.
   const inView = (a) => (state.view === "completed") === (a.status === "completed");
   const count = (id) => state.assignments.filter((a) => inView(a) && (id == null || a.course_id === id)).length;
 
@@ -193,11 +204,12 @@ function renderGroup(key, label, items) {
 }
 
 function renderList() {
-  const items = state.assignments.filter(
-    (a) =>
-      (state.view === "completed") === (a.status === "completed") &&
-      (state.course == null || a.course_id === state.course),
-  );
+  const forCourse = state.assignments.filter((a) => state.course == null || a.course_id === state.course);
+  if (state.view === "calendar") {
+    renderCalendar(forCourse);
+    return;
+  }
+  const items = forCourse.filter((a) => (state.view === "completed") === (a.status === "completed"));
 
   if (!items.length) {
     $("#list").innerHTML = `<p class="empty">${
@@ -219,7 +231,115 @@ function renderList() {
   }).join("");
 }
 
+// ---------- calendar ----------
+
+function renderCalendar(items) {
+  const { year, month } = state.cal;
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month + 1, 0);
+  // Full weeks, Sunday through Saturday.
+  const start = new Date(year, month, 1 - first.getDay());
+  const end = new Date(year, month, last.getDate() + (6 - last.getDay()));
+  const todayISO = toISO(new Date());
+
+  const byDate = new Map();
+  for (const a of items) {
+    if (!a.due_date) continue;
+    if (!byDate.has(a.due_date)) byDate.set(a.due_date, []);
+    byDate.get(a.due_date).push(a);
+  }
+
+  const weekdays = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    weekdays.push(`<div class="weekday">${d.toLocaleDateString(undefined, { weekday: "short" })}</div>`);
+  }
+
+  const cells = [];
+  for (const d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const iso = toISO(d);
+    const dayItems = byDate.get(iso) ?? [];
+    const open = dayItems.filter((a) => a.status !== "completed");
+    const hours = sumHours(open);
+    // All pills are rendered; CSS hides the extras on desktop (phones show dots for all).
+    const pills = dayItems
+      .map(
+        (a, i) => `<span class="pill ${a.status === "completed" ? "done" : ""} ${a.date_tbd ? "tbd" : ""} ${
+          i >= MAX_PILLS ? "extra" : ""
+        }"
+                      style="--course:${courseColor(a.course_id)}" title="${esc(`${a.course_code}: ${a.title}`)}">
+                  <span class="pill-text">${a.date_tbd ? "~" : ""}${esc(a.title)}</span></span>`,
+      )
+      .join("");
+    const more = dayItems.length > MAX_PILLS ? `<span class="more">+${dayItems.length - MAX_PILLS} more</span>` : "";
+    const label = `${fmtDate(iso)}: ${dayItems.length} ${dayItems.length === 1 ? "item" : "items"}${
+      hours ? `, ${fmtHours(hours)} open` : ""
+    }`;
+    const classes = [
+      "day",
+      d.getMonth() !== month && "other-month",
+      iso === todayISO && "today",
+      iso === state.selected && "selected",
+    ].filter(Boolean);
+    cells.push(`
+      <button class="${classes.join(" ")}" data-date="${iso}" aria-label="${esc(label)}"
+              aria-pressed="${iso === state.selected}">
+        <span class="day-head">
+          <span class="num">${d.getDate()}</span>
+          ${hours ? `<span class="load ${hours >= HEAVY_DAY_HOURS ? "heavy" : ""}">${fmtHours(hours)}</span>` : ""}
+        </span>
+        <span class="pills">${pills}${more}</span>
+      </button>`);
+  }
+
+  const undated = items.filter((a) => !a.due_date && a.status !== "completed").length;
+  const monthName = first.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+
+  $("#list").innerHTML = `
+    <div class="cal-head">
+      <h2>${monthName}</h2>
+      <div class="cal-nav">
+        <button data-cal="prev" aria-label="Previous month">‹</button>
+        <button data-cal="today">Today</button>
+        <button data-cal="next" aria-label="Next month">›</button>
+      </div>
+    </div>
+    <div class="cal-grid">${weekdays.join("")}${cells.join("")}</div>
+    ${
+      undated
+        ? `<p class="cal-note">${undated} open ${undated === 1 ? "item has" : "items have"} no date yet —
+             <button class="link" data-goto="open">see Upcoming</button>.</p>`
+        : ""
+    }
+    <section class="day-detail">${renderDayDetail(byDate)}</section>`;
+}
+
+function renderDayDetail(byDate) {
+  if (!state.selected) return `<p class="empty">Pick a day to see what's due.</p>`;
+  const items = byDate.get(state.selected) ?? [];
+  const title = parseDate(state.selected).toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+  const open = items.filter((a) => a.status !== "completed");
+  const summary = items.length
+    ? `${items.length} ${items.length === 1 ? "item" : "items"}${open.length ? ` · ${fmtHours(sumHours(open))} open` : ""}`
+    : "";
+  return `
+    <div class="day-detail-head"><h2>${title}</h2><span class="summary">${summary}</span></div>
+    ${items.length ? `<ul class="items">${items.map(renderItem).join("")}</ul>` : `<p class="empty">Nothing due.</p>`}`;
+}
+
+function showMonth(year, month) {
+  const d = new Date(year, month, 1); // normalizes month -1 / 12
+  state.cal = { year: d.getFullYear(), month: d.getMonth() };
+}
+
 function render() {
+  // Mirror the view in the URL so it can be bookmarked (e.g. /#calendar).
+  history.replaceState(null, "", state.view === "open" ? location.pathname : `#${state.view}`);
   renderStats();
   renderFilters();
   renderList();
@@ -307,8 +427,38 @@ function bindEvents() {
   });
 
   $("#list").addEventListener("click", (e) => {
-    const btn = e.target.closest(".hours");
-    if (btn) editHours(btn);
+    const hours = e.target.closest(".hours");
+    if (hours) return editHours(hours);
+
+    const nav = e.target.closest("[data-cal]");
+    if (nav) {
+      const { year, month } = state.cal;
+      if (nav.dataset.cal === "prev") showMonth(year, month - 1);
+      if (nav.dataset.cal === "next") showMonth(year, month + 1);
+      if (nav.dataset.cal === "today") {
+        const now = new Date();
+        showMonth(now.getFullYear(), now.getMonth());
+        state.selected = toISO(now);
+      }
+      return render();
+    }
+
+    const day = e.target.closest(".day");
+    if (day) {
+      state.selected = day.dataset.date;
+      const d = parseDate(day.dataset.date);
+      if (d.getMonth() !== state.cal.month) showMonth(d.getFullYear(), d.getMonth());
+      render();
+      document.querySelector(".day-detail")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
+
+    const goto = e.target.closest("[data-goto]");
+    if (goto) {
+      state.view = goto.dataset.goto;
+      savePrefs();
+      render();
+    }
   });
 
   // <details> toggle events don't bubble, so listen in the capture phase.
@@ -326,6 +476,11 @@ function bindEvents() {
 
 async function init() {
   loadPrefs();
+  const fromHash = location.hash.slice(1);
+  if (VIEWS.includes(fromHash)) state.view = fromHash;
+  const now = new Date();
+  showMonth(now.getFullYear(), now.getMonth());
+  state.selected = toISO(now);
   bindEvents();
   $("#today").textContent = new Date().toLocaleDateString(undefined, {
     weekday: "long",
