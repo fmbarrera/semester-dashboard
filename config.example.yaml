@@ -1,0 +1,7 @@
+# Copy to config.local.yaml (gitignored) and edit. All settings are optional.
+
+# Folder to back up the database and seed/*.local.yaml into, on every
+# startup and shutdown. Use a synced folder (iCloud Drive, Dropbox, ...)
+# so your progress survives losing this machine. Snapshots go in a
+# "Semester Dashboard Backups" subfolder; the newest 30 are kept.
+# backup_dir: ~/Library/Mobile Documents/com~apple~CloudDocs/Backups

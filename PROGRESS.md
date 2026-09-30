@@ -62,6 +62,14 @@ FastAPI backend + tests, list/dashboard frontend):
       overdue). Light + dark mode; checked at 390px phone width. View,
       filter and collapsed groups remembered per browser (localStorage).
 
+- [x] **Automatic backups** (`dashboard/backup.py`), 2026-09-30: on every
+      start and Ctrl+C, snapshots `data/dashboard.db` + `seed/*.local.yaml`
+      into `<backup_dir>/Semester Dashboard Backups/<timestamp>/`, skips if
+      unchanged, keeps the newest 30. `backup_dir` lives in the gitignored
+      `config.local.yaml` (template: `config.example.yaml`); currently a
+      folder in iCloud Drive. To restore: stop
+      the app, copy a snapshot's `dashboard.db` back into `data/`.
+
 ## Not started yet
 
 - [ ] Frontend calendar view (month grid, color-coded by class).
